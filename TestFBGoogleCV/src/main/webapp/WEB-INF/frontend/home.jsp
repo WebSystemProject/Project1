@@ -111,15 +111,13 @@ html, body {
 			  url: "/images",
 			  type: "get", 
 			  data: { 
-			    //fromDate: '01/01/2001',
-			    //toDate: new Date().toLocaleString().split(',')[0],
 			    
 			    access_token:  document.getElementById("access_token").value,
 			    user_id:  document.getElementById("user_id").value
 			  },
 			  success: function(response) {
 			    console.log(response);
-			    //createImages(response);
+			    
 			     createPhotoForApp(response);
 			  },
 			  error: function(xhr) {
@@ -143,7 +141,7 @@ html, body {
 	
 	var currentLabelDisplay;
 	var currentLabelA;
-	//function createImages(response){
+	
 		function createPhotoForApp(response){
 		var content_div = document.getElementById("div_content");
 		var sidebar_div = document.getElementById("div_sidebar");

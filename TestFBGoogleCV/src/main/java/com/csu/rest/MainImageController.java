@@ -80,40 +80,33 @@ public class MainImageController {
 
 	@GetMapping(value = "/images")
 	
-	//public String getAllImages(Model m, @RequestParam String fromDate, @RequestParam String toDate, @RequestParam String access_token, String user_id){
+	
 		public String getAllImages(Model m, @RequestParam String access_token, String user_id){
 		GoogleAnalytics.publishAnalytics("search","Search images");
 		
-		//Get Images from FB, run vision and store in data store.
+		
 		DatastoreService ds = DatastoreServiceFactory.getDatastoreService();
-		//getImagesFromFbAndStoreinDataStore(access_token, ds, user_id);
+		
 		 FBphotosToDataStore(access_token, ds, user_id);
 
 
-		//Get data for a given date from data store and send response.
-		//ImageDataResponse imageDataResponse =  getImagesFromStore(ds,fromDate, toDate, user_id);
+		
 		 ImageDataResponse imageDataResponse =  getImagesFromStore(ds, user_id);
 		m.addAttribute("imageDataResponse", imageDataResponse);
 
 		return "jsonview";
 	}
 	
-//UserPhotosResponse
-//UserPhotosResponse
-	//ImageDataResponse
-	
-	//private void getImagesFromFbAndStoreinDataStore(String access_token, DatastoreService datastore, String user_id) {
+
 	private void FBphotosToDataStore(String access_token, DatastoreService ds, String user_id) {
 		try {
-			int limit = 5; //TODO increase the limit 
-			//String baseUrl = "https://graph.facebook.com/v9.0/me/albums";
-			String UrlFirstPart = "https://graph.facebook.com/v10.0/me/albums?fields=photos%7Bcreated_time%2Cid%2Cpicture%7D%2Cname&access_token=";
-			//String parameters = "?fields=photos%7Bcreated_time%2Cid%2Cpicture%7D%2Cname&access_token=";
+			int limit = 5; 
 			
-			//String url = baseUrl + parameters + access_token;
+			String UrlFirstPart = "https://graph.facebook.com/v10.0/me/albums?fields=photos%7Bcreated_time%2Cid%2Cpicture%7D%2Cname&access_token=";
+			
 			String url = UrlFirstPart+ access_token;
 
-			// This is to work with FB paging
+			
 			int count = 0;
 			while(StringUtils.isNotBlank(url) && count <= 5) {
 				
@@ -125,17 +118,13 @@ public class MainImageController {
 						if(null !=  album.getPhotos() && null != album.getPhotos().getData() && !album.getPhotos().getData().isEmpty()) {
 							album.getPhotos().getData().forEach( photo -> {
 
-								//TODO Check if the image is already present in the data store and process google vision if not present.
 								
-								//System.out.println(photo.getPicture());
-
-								//Entity user = checkIfPresent(ds, photo.getId());
 								Entity user = findIfAlreadyPresent(ds, photo.getId());
 								if(null == user) {
-									//Process and fetch image lables using google vision analytics.
+									
 									List<EntityAnnotation> imageLabels = getImageLabels(photo.getPicture());
 									System.out.println(null != imageLabels);
-									//Save the imageId, image URL and lables to data store
+									
 									if(null != imageLabels) {
 										user = saveToDataStore(imageLabels, photo, ds, user_id);
 									}
@@ -157,8 +146,7 @@ public class MainImageController {
 	}
 
 
-	//Query data store to check if the image is already present. findIfAlreadyPresent
-	//private Entity checkIfPresent(DatastoreService datastore, String fbPhotoId) {
+	
 	private Entity findIfAlreadyPresent(DatastoreService datastore, String fbPhotoId) {
 		Query q =
 				new Query("User")
@@ -170,8 +158,7 @@ public class MainImageController {
 	}
 
 
-	//Query data store to check if the image is already present.
-	//private ImageDataResponse getImagesFromStore(DatastoreService datastore, String fromDate, String toDate, String user_id ) {
+	
 		private ImageDataResponse getImagesFromStore(DatastoreService datastore, String user_id ) {
 
 
@@ -179,28 +166,16 @@ public class MainImageController {
 		Query query =
 
 				new Query("User");
-				//new Query("User_Data");
+				
 
 
-		//DateFormat originalFormat = new SimpleDateFormat("MM/dd/yyyy");
+		
 		try {
 			
-			Calendar c = Calendar.getInstance();
 			
-			//Date search_from_date = originalFormat.parse(fromDate);
-			
-
-			//c.setTime(originalFormat.parse(toDate)); c.add(Calendar.DAY_OF_MONTH, 1);  
-			
-			//Date search_to_date = originalFormat.parse(originalFormat.format(c.getTime())); 
-			
-			//Filter fromFilter = new FilterPredicate("fb_post_date", FilterOperator.GREATER_THAN_OR_EQUAL, search_from_date);
-
-			//Filter toFIlter = new FilterPredicate("fb_post_date", FilterOperator.LESS_THAN_OR_EQUAL, search_to_date);
 			
 			Filter userFilter = new FilterPredicate("user_id", FilterOperator.EQUAL, user_id);
 
-			//Filter filter = CompositeFilterOperator.and(fromFilter, toFIlter, userFilter);
 			Filter filter = CompositeFilterOperator.and(userFilter);
 
 			query.setFilter(filter);
@@ -208,9 +183,6 @@ public class MainImageController {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-/*catch (ParseException e) {
-			e.printStackTrace();
-		}*/
 
 
 		PreparedQuery pq = datastore.prepare(query);
@@ -249,7 +221,7 @@ public class MainImageController {
 	}
 
 
-	//Saving to data store.
+	
 	private Entity saveToDataStore(List<EntityAnnotation> imageLabels, Datum_ photo, DatastoreService datastore, String user_id) {
 
 		System.out.println("image labels:"+imageLabels);
@@ -262,23 +234,12 @@ public class MainImageController {
 		if(null != lables && !lables.isEmpty()) {
 
 			Entity user = new Entity("User");
-			//Entity user = new Entity("User_Data");
-			/*
-
-			DateFormat originalFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
 			
-			Date fb_date = null;
-			try {
-				fb_date = originalFormat.parse(photo.getCreatedTime());
-			} catch (ParseException e) {
-				e.printStackTrace();
-			}
-*/
-			//user.setProperty("fb_post_date", fb_date);
+
+			
 			user.setProperty("user_id", user_id);
 			user.setProperty("fb_image_id", photo.getId());
 			user.setProperty("image_url", photo.getPicture());
-			//user.setProperty("created_on", new Date());
 			user.setProperty("lables", lables);
 
 			datastore.put(user);
@@ -330,7 +291,7 @@ public class MainImageController {
 
 			CloseableHttpResponse response = httpClient.execute(request);
 			try {
-				System.out.println(response.getStatusLine().getStatusCode());   // 200
+				System.out.println(response.getStatusLine().getStatusCode());   
 				HttpEntity entity = response.getEntity();
 				if (entity != null) {
 					String result = EntityUtils.toString(entity);
