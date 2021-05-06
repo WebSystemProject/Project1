@@ -80,7 +80,6 @@ public class MainPhotoProcessor {
 	}
 
 	@GetMapping(value = "/images")
-	//public String getAllImages(Model model, @RequestParam String fromDate, @RequestParam String toDate, @RequestParam String access_token, String user_id){
 	public String getAllImages(Model model, @RequestParam String access_token, String user_id){
 
 		GoogleAnalytics.publishAnalytics("search","Search images");
@@ -164,43 +163,17 @@ public class MainPhotoProcessor {
 
 
 	//Query data store to check if the image is already present.
-	//private ImageDataResponse getImagesFromStore(DatastoreService datastore, String fromDate, String toDate, String user_id ) {
 	private Response getImagesFromStore(DatastoreService datastore,  String user_id ) {
-
-
-		Query query =
-
-				new Query("User");
+		Query query = new Query("User");
 
 		DateFormat originalFormat = new SimpleDateFormat("MM/dd/yyyy");
 		try {
-			
-			//Calendar c = Calendar.getInstance();
-			
-			//Date search_from_date = originalFormat.parse(fromDate);
-			
-
-			//c.setTime(originalFormat.parse(toDate)); c.add(Calendar.DAY_OF_MONTH, 1);  
-			
-			//Date search_to_date = originalFormat.parse(originalFormat.format(c.getTime())); 
-			
-			//Filter fromFilter = new FilterPredicate("fb_post_date", FilterOperator.GREATER_THAN_OR_EQUAL, search_from_date);
-
-			//Filter toFIlter = new FilterPredicate("fb_post_date", FilterOperator.LESS_THAN_OR_EQUAL, search_to_date);
-			
 			Filter userFilter = new FilterPredicate("user_id", FilterOperator.EQUAL, user_id);
-
-			//Filter filter = CompositeFilterOperator.and(fromFilter, toFIlter, userFilter);
-
-			//query.setFilter(filter);
 			query.setFilter(userFilter);
 
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
-
-
 		PreparedQuery pq = datastore.prepare(query);
 		List<Entity> results = pq.asList(FetchOptions.Builder.withDefaults());
 
@@ -218,7 +191,6 @@ public class MainPhotoProcessor {
 			});
 		}
 
-
 		Response imageDataResponse = new Response();
 
 		imageDataResponse.setImages(images);
@@ -228,14 +200,12 @@ public class MainPhotoProcessor {
 		return imageDataResponse;
 	}
 
-
 	public static byte[] downloadFile(URL url) throws Exception {
 		try (InputStream in = url.openStream()) {
 			byte[] bytes = IOUtils.toByteArray(in);            
 			return bytes;
 		}
 	}
-
 
 	//Saving to data store.
 	private Entity saveToDataStore(List<EntityAnnotation> imageLabels, Datum_ photo, DatastoreService datastore, String user_id) {

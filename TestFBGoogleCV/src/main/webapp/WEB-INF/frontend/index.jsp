@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 
-
 <html>
 <head>
 
@@ -13,11 +12,6 @@
 
   gtag('config', 'G-7X5FRFYW67');
 </script>
-
-
-
-
-
 
 <title>Facebook-GoogleCV App</title>
 <meta charset="UTF-8">
@@ -54,8 +48,7 @@ html, body {
 				statusChangeCallback(response);
 			});
 		}
-		
-		
+
 		  window.fbAsyncInit = function() {
 		    FB.init({
 		      appId      : '125356112918261',
@@ -78,7 +71,6 @@ html, body {
 		     js.src = "https://connect.facebook.net/en_US/sdk.js";
 		     fjs.parentNode.insertBefore(js, fjs);
 		   }(document, 'script', 'facebook-jssdk'));
-		
 
 		function loadFormData() { 
 			console.log('Welcome! Plese wait... Getting your information.... ');
@@ -94,7 +86,6 @@ html, body {
 								
 							});
 		}
-		
 
 		function logout(){
 		 	 FB.logout(function(response) {
@@ -104,14 +95,9 @@ html, body {
 		
 	</script>
 
-
 	<div id="fb-root"></div>
-	
-
-
 
 	<table class="full-height">
-
 		<tr style="height: 5%">
 			<td style="align-items: center;">
 				<div id="status"></div>
@@ -127,11 +113,7 @@ html, body {
 			<td align="center"><fb:login-button scope="user_photos"
 					onlogin="checkLoginState();" size="xlarge">Login with Facebook</fb:login-button>
 			</td>
-
 		</tr>
-
-		
-		
 	</table>
 
 
@@ -140,10 +122,7 @@ html, body {
 	 <input type="hidden" name="user_name"  id="user_name"> 
 	  <input type="hidden" name="user_id"  id="user_id">
 	</form>
-
-	<!-- Load the JS SDK asynchronously -->
 			<script async defer crossorigin="anonymous"
 				src="https://connect.facebook.net/en_US/sdk.js"></script>
-
 		</body>
 </html>

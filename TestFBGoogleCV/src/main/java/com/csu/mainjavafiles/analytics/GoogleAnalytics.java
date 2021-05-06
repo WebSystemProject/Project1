@@ -4,9 +4,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-
 import org.apache.http.client.utils.URIBuilder;
-
 import com.google.appengine.api.urlfetch.URLFetchService;
 import com.google.appengine.api.urlfetch.URLFetchServiceFactory;
 
@@ -20,14 +18,12 @@ public class GoogleAnalytics {
 		.setScheme("http")
 		.setHost("www.google-analytics.com")
 		.setPath("/collect")
-		.addParameter("v", "1") // API Version.
-		.addParameter("tid", trackingId) // Tracking ID / Property ID.
-		// Anonymous Client Identifier. Ideally, this should be a UUID that
-		// is associated with particular user, device, or browser instance.
+		.addParameter("v", "1")
+		.addParameter("tid", trackingId) 
 		.addParameter("cid", "555")
-		.addParameter("t", type) // Event hit type.
-		.addParameter("ec", "FB Serverside") // Event category.
-		.addParameter("ea", action); // Event action.
+		.addParameter("t", type)
+		.addParameter("ec", "FB Serverside")
+		.addParameter("ea", action); 
 		URI uri = null;
 		try {
 			uri = builder.build();
@@ -35,12 +31,9 @@ public class GoogleAnalytics {
 		}
 		URLFetchService fetcher = URLFetchServiceFactory.getURLFetchService();
 		try {
-
 			URL url = uri.toURL();
-
 			fetcher.fetch(url);
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

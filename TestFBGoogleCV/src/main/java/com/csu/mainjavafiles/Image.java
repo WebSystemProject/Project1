@@ -9,8 +9,6 @@ public class Image {
 	
 	List<String> labels = new ArrayList<String>();
 
-
-
 	public String getUrl() {
 		return url;
 	}

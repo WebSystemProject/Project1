@@ -24,8 +24,6 @@
 <script src="https://code.jquery.com/ui/1.10.4/jquery-ui.js"></script>
 <script src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
-
-
 <style>
 html, body {
 	height: 100%;
@@ -69,8 +67,6 @@ html, body {
   color: white;
 }
 
-
-
 .loader {
   border: 10px solid #3498db;
   border-radius: 20%;
@@ -96,21 +92,12 @@ html, body {
 
 
 <script>
-	
-	
 	function fetchUserImage(){
-		
-		
-		
 		document.getElementById("loader").style.display = "block";
-		
 		$.ajax({
 			  url: "/images",
 			  type: "get", 
 			  data: { 
-			   // fromDate: '01/01/2001',
-			    //toDate: new Date().toLocaleString().split(',')[0],
-			    
 			    access_token:  document.getElementById("access_token").value,
 			    user_id:  document.getElementById("user_id").value
 			  },
@@ -120,7 +107,6 @@ html, body {
 			  },
 			  error: function(xhr) {
 				  document.getElementById("loader").style.display="none";
-			    
 			  }
 			});
 	}
@@ -135,7 +121,6 @@ html, body {
 			column_div.removeChild(column_div.lastChild);
 		  }
 	}
-	
 	
 	var currentLabelDisplay;
 	var currentLabelA;
@@ -159,7 +144,6 @@ html, body {
 		label_a.addEventListener("click", function(event) {
 			var current_display_id = event.target.text;
 			document.getElementById(current_display_id).style.display="block";
-			//twttr.widgets.load();
 			currentLabelDisplay.style.display="none";
 			currentLabelDisplay = document.getElementById(current_display_id);
 			
@@ -181,15 +165,11 @@ html, body {
 		}else{
 			label_div.style.display = "none";
 		}
-		
 		 content_div.appendChild(label_div);
-		 
-		 
 		 column_div.appendChild(label_a);
 		 isFirst=false;
 		 
 		});
-		 
 
 		response.imageDataResponse.images.forEach(obj => {
 	        
@@ -208,8 +188,6 @@ html, body {
 	      })
 	       
 	    });
-		
-		
 		document.getElementById("loader").style.display="none";
 	}
 	
@@ -227,22 +205,15 @@ html, body {
 	
 	function twiteer(image_url){
 		var url = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(image_url);
-		var tweet_a = document.createElement("a");
-		tweet_a.setAttribute("href",url);
-		tweet_a.setAttribute("class","twitter-share-button");
-		tweet_a.setAttribute("data-lang","en");
-		tweet_a.setAttribute("data-show-count","false");	
-		tweet_a.text="Tweet";
-		return tweet_a;
+		var twitter = document.createElement('a');
+		twitter.setAttribute('href', url);
+		twitter.setAttribute('class', 'twitter-share-button');
+		twitter.setAttribute("data-lang","en");
+		twitter.innerHTML = "Tweet";
+		return twitter;
 	}
-	
-	
-	
-	
-	
 
-	
-	  window.fbAsyncInit = function() {
+	window.fbAsyncInit = function() {
 	    FB.init({
 	      appId      : '125356112918261',
 	      cookie     : true,
@@ -261,11 +232,7 @@ html, body {
 	     js.src = "https://connect.facebook.net/en_US/sdk.js";
 	     fjs.parentNode.insertBefore(js, fjs);
 	   }(document, 'script', 'facebook-jssdk'));
-	
-	
-	
-	
-	
+
 	  function logout(){
 		  FB.getLoginStatus(function(response){
 		 	 FB.logout(function(response) {
@@ -276,34 +243,20 @@ html, body {
 		  });
 		  }
 	
-	
-	
-	
-	
 </script>
-
 
 </head>
 <body onload="javascript:fetchUserImage()">
 	<table class="total" >
-
 		<tr style="height: 10%">
-		
 			<td style="align-items: center;" colspan="2">
 				<div class="header" id="div_header">
-				
 					<table style="width: 100%; height: 100%; padding: 0px;">
-					
 						<tr>
-						
 							<td width="5%">
-							
-								
 							</td>
-							
 							<td width="20%" align="left"><p style=" color: #0066ff"><%=request.getAttribute("user_name")%></td>
 							<td width="45%" align="center"><p style="font-weight: bold;font-size: 25px; color: #ff0066">Facebook-GoogleCV App</p></td>
-							
 							<td><a id ="logout" href="#" align="right" onclick="logout()"> Log Out </a></td>
 						</tr>
 					</table>
@@ -313,7 +266,6 @@ html, body {
 		<tr style="height: 85%">
 			<td width="15%">
 				<div class="column" id="div_column">
-
 				</div>
 			</td>
 			<td width="85%" align="center">
@@ -322,15 +274,11 @@ html, body {
 				</div>
 			</td>
 		</tr>
-		
 	</table>
-
-
 	<form id="form_home" action="/home" method="post">
-	 <input type="hidden" name="access_token" id="access_token" value="<%=request.getAttribute("access_token")%>">
-	 <input type="hidden" name="user_name"  id="user_name"  value="<%=request.getAttribute("user_name")%>"> 
-	  <input type="hidden" name="user_id"  id="user_id" value="<%=request.getAttribute("user_id")%>">
+	 	<input type="hidden" name="access_token" id="access_token" value="<%=request.getAttribute("access_token")%>">
+	 	<input type="hidden" name="user_name"  id="user_name"  value="<%=request.getAttribute("user_name")%>"> 
+	  	<input type="hidden" name="user_id"  id="user_id" value="<%=request.getAttribute("user_id")%>">
 	</form>
-
-		</body>
+</body>
 </html>
