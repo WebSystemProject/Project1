@@ -72,6 +72,17 @@ public class MainPhotoProcessor {
 		GoogleAnalytics.publishAnalytics("Login","Login");
 		return "index";
 	}
+	
+	@GetMapping(value = "/images")
+	public String getAllImages(Model model, @RequestParam String access_token, String userID){
+		GoogleAnalytics.publishAnalytics("search","Search images");
+		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
+		uploadPhotoFbToGoogleDataStore(access_token, datastore, userID);
+		Response imageDataResponse =  getPhotosFromDataStore(datastore, userID);
+		model.addAttribute("imageDataResponse", imageDataResponse);
+
+		return "jsonview";
+	}
 
 	@PostMapping("/home")
 	public String home(Model model, HttpServletRequest request, HttpServletResponse response) {
@@ -81,17 +92,6 @@ public class MainPhotoProcessor {
 		model.addAttribute("user_name", request.getParameter("user_name"));
 		model.addAttribute("userID", request.getParameter("userID"));
 		return "home";
-	}
-
-	@GetMapping(value = "/images")
-	public String getAllImages(Model model, @RequestParam String access_token, String userID){
-		GoogleAnalytics.publishAnalytics("search","Search images");
-		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		fetchPhotoFbToGoogleDataStore(access_token, datastore, userID);
-		Response imageDataResponse =  getPhotosFromDataStore(datastore, userID);
-		model.addAttribute("imageDataResponse", imageDataResponse);
-
-		return "jsonview";
 	}
 
 	// check if photo already present in Google Data store before upload from FB to Data store
@@ -184,21 +184,17 @@ public class MainPhotoProcessor {
 	}
 
     // upload FB photo to Google Data Store
-	private void fetchPhotoFbToGoogleDataStore(String access_token, DatastoreService datastore, String userID) {
+	private void uploadPhotoFbToGoogleDataStore(String access_token, DatastoreService datastore, String userID) {
 		try {
 			String rootUrl = "https://graph.facebook.com/v10.0/me/albums?fields=photos%7Bcreated_time%2Cid%2Cpicture%7D%2Cname&access_token=";
 	
 			String url = rootUrl  + access_token;
-			int count = 0;
-			while(StringUtils.isNotBlank(url) && count <= 5) {
-				FbAlbums albums = fetchPhotosFromFb(url);
-				
+			while(StringUtils.isNotBlank(url)) {
+				FbAlbums albums = fetchPhotosFromFb(url);	
 				if(null != albums && !albums.getData().isEmpty()) {
-					count++;
 					albums.getData().forEach(album -> {
 						if(null !=  album.getPhotos() && null != album.getPhotos().getData() && !album.getPhotos().getData().isEmpty()) {
 							album.getPhotos().getData().forEach( photo -> {
-
 								Entity user = isPhotoPresent(datastore, photo.getId());
 								if(null == user) {
 									List<EntityAnnotation> imageLabels = getImageLabels(photo.getPicture());
@@ -213,7 +209,6 @@ public class MainPhotoProcessor {
 				}else {
 					url = null;
 				}
-
 			}
 
 		} catch (IOException e) {
