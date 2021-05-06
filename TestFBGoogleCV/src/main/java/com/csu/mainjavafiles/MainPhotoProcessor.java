@@ -18,6 +18,13 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
@@ -27,17 +34,23 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 
 import com.csu.mainjavafiles.analytics.GoogleAnalytics;
 import com.csu.mainjavafiles.model.Datum_;
 import com.csu.mainjavafiles.model.FbAlbums;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
+import com.google.cloud.vision.v1.AnnotateImageRequest;
+import com.google.cloud.vision.v1.AnnotateImageResponse;
+import com.google.cloud.vision.v1.BatchAnnotateImagesResponse;
+import com.google.cloud.vision.v1.EntityAnnotation;
+import com.google.cloud.vision.v1.Feature;
+import com.google.cloud.vision.v1.Image;
+import com.google.cloud.vision.v1.ImageAnnotatorClient;
+
+import com.google.protobuf.ByteString;
+
 import com.google.appengine.api.datastore.DatastoreService;
 import com.google.appengine.api.datastore.DatastoreServiceFactory;
 import com.google.appengine.api.datastore.Entity;
@@ -48,14 +61,6 @@ import com.google.appengine.api.datastore.Query.CompositeFilterOperator;
 import com.google.appengine.api.datastore.Query.Filter;
 import com.google.appengine.api.datastore.Query.FilterOperator;
 import com.google.appengine.api.datastore.Query.FilterPredicate;
-import com.google.cloud.vision.v1.AnnotateImageRequest;
-import com.google.cloud.vision.v1.AnnotateImageResponse;
-import com.google.cloud.vision.v1.BatchAnnotateImagesResponse;
-import com.google.cloud.vision.v1.EntityAnnotation;
-import com.google.cloud.vision.v1.Feature;
-import com.google.cloud.vision.v1.Image;
-import com.google.cloud.vision.v1.ImageAnnotatorClient;
-import com.google.protobuf.ByteString;
 
 
 @Controller
@@ -88,7 +93,97 @@ public class MainPhotoProcessor {
 
 		return "jsonview";
 	}
-	
+
+	// check if photo already present in Google Data store before upload from FB to Data store
+	private Entity isPhotoPresent(DatastoreService datastore, String fbPhotoId) {
+		Entity isPresent = datastore.prepare(new Query("User").setFilter(new FilterPredicate("fb_image_id", FilterOperator.EQUAL, fbPhotoId))).asSingleEntity();
+		return isPresent;
+	}
+
+    // download image from data store for preview by FB-Google CV app
+	public static byte[] downloadPhoto(URL url) throws Exception {
+		try (InputStream in = url.openStream()) {
+			byte[] bytes = IOUtils.toByteArray(in);            
+			return bytes;
+		}
+	}
+
+	//fetch photo from FB
+	private FbAlbums fetchPhotosFromFb(String url) throws IOException {
+		CloseableHttpClient httpClient = HttpClients.createDefault();
+		FbAlbums albums = null;
+		try {
+			HttpGet request = new HttpGet(url);
+			CloseableHttpResponse response = httpClient.execute(request);
+			try {
+				System.out.println(response.getStatusLine().getStatusCode()); 
+				HttpEntity entity = response.getEntity();
+				if (entity != null) {
+					String result = EntityUtils.toString(entity);
+					System.out.println(result);
+					ObjectMapper mapper = new ObjectMapper();
+					albums = mapper.readValue(result, FbAlbums.class);	
+				}
+
+			} finally {
+				response.close();
+			}
+		} catch (ClientProtocolException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} finally {
+			httpClient.close();
+		}
+		return albums;
+	}
+
+    // get photos for user from Google Store based on userID
+	private Response getPhotosFromDataStore(DatastoreService datastore,  String userID ) {
+		Query query = new Query("User");
+		try {
+			query.setFilter(new FilterPredicate("userID", FilterOperator.EQUAL, userID));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		List<Entity> result = datastore.prepare(query).asList(FetchOptions.Builder.withDefaults());
+		Set<String> lables = new TreeSet<>();
+		List<com.csu.mainjavafiles.Image> images = new ArrayList<>();
+		if(null != result) {
+			result.forEach(user -> {
+				List<String> lablesFromStore = (List<String>) user.getProperty("lables");
+				lables.addAll(lablesFromStore);
+				com.csu.mainjavafiles.Image image = new com.csu.mainjavafiles.Image();
+				image.setUrl(user.getProperty("image_url").toString());
+				image.setLabels(lablesFromStore);
+				images.add(image);
+			});
+		}
+		Response response = new Response();
+		response.setImages(images);
+		response.setLables(lables);
+		return response;
+	}
+
+    // add photo to Google data store
+	private Entity addPhotoToDataStore(List<EntityAnnotation> Labels, Datum_ photo, DatastoreService datastore, String userID) {
+		//check if GoogleCV match >= 0.96 accuracy
+		List<String> lables = Labels.stream().filter(label -> label.getScore()  >= 0.96)
+				.map(EntityAnnotation::getDescription).collect(Collectors.toList());
+
+		if(null != lables && !lables.isEmpty()) {
+			Entity user = new Entity("User");
+			user.setProperty("userID", userID);
+			user.setProperty("fb_image_id", photo.getId());
+			user.setProperty("image_url", photo.getPicture());
+			user.setProperty("lables", lables);
+			datastore.put(user);
+			return user;
+		}
+		return null;
+	}
+
+    // upload FB photo to Google Data Store
 	private void fetchPhotoFbToGoogleDataStore(String access_token, DatastoreService datastore, String userID) {
 		try {
 			String rootUrl = "https://graph.facebook.com/v10.0/me/albums?fields=photos%7Bcreated_time%2Cid%2Cpicture%7D%2Cname&access_token=";
@@ -126,61 +221,7 @@ public class MainPhotoProcessor {
 		}
 	}
 
-	private Entity isPhotoPresent(DatastoreService datastore, String fbPhotoId) {
-		Entity isPresent = datastore.prepare(new Query("User").setFilter(new FilterPredicate("fb_image_id", FilterOperator.EQUAL, fbPhotoId))).asSingleEntity();
-		return isPresent;
-	}
-
-	private Response getPhotosFromDataStore(DatastoreService datastore,  String userID ) {
-		Query query = new Query("User");
-		try {
-			query.setFilter(new FilterPredicate("userID", FilterOperator.EQUAL, userID));
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		List<Entity> result = datastore.prepare(query).asList(FetchOptions.Builder.withDefaults());
-		Set<String> lables = new TreeSet<>();
-		List<com.csu.mainjavafiles.Image> images = new ArrayList<>();
-		if(null != result) {
-			result.forEach(user -> {
-				List<String> lablesFromStore = (List<String>) user.getProperty("lables");
-				lables.addAll(lablesFromStore);
-				com.csu.mainjavafiles.Image image = new com.csu.mainjavafiles.Image();
-				image.setUrl(user.getProperty("image_url").toString());
-				image.setLabels(lablesFromStore);
-				images.add(image);
-			});
-		}
-		Response response = new Response();
-		response.setImages(images);
-		response.setLables(lables);
-		return response;
-	}
-
-	public static byte[] downloadPhoto(URL url) throws Exception {
-		try (InputStream in = url.openStream()) {
-			byte[] bytes = IOUtils.toByteArray(in);            
-			return bytes;
-		}
-	}
-
-	private Entity addPhotoToDataStore(List<EntityAnnotation> Labels, Datum_ photo, DatastoreService datastore, String userID) {
-		//check if GoogleCV match >= 0.96 accuracy
-		List<String> lables = Labels.stream().filter(label -> label.getScore()  >= 0.96)
-				.map(EntityAnnotation::getDescription).collect(Collectors.toList());
-
-		if(null != lables && !lables.isEmpty()) {
-			Entity user = new Entity("User");
-			user.setProperty("userID", userID);
-			user.setProperty("fb_image_id", photo.getId());
-			user.setProperty("image_url", photo.getPicture());
-			user.setProperty("lables", lables);
-			datastore.put(user);
-			return user;
-		}
-		return null;
-	}
-
+    // get Image labels from Google CV
 	private List<EntityAnnotation> getImageLabels(String imageUrl) {
 		try {
 			byte[]  imgBytes = downloadPhoto(new URL(imageUrl));
@@ -204,35 +245,5 @@ public class MainPhotoProcessor {
 			e.printStackTrace();
 		}
 		return null;
-	}
-
-	private FbAlbums fetchPhotosFromFb(String url) throws IOException {
-		CloseableHttpClient httpClient = HttpClients.createDefault();
-		FbAlbums albums = null;
-		try {
-			HttpGet request = new HttpGet(url);
-			CloseableHttpResponse response = httpClient.execute(request);
-			try {
-				System.out.println(response.getStatusLine().getStatusCode()); 
-				HttpEntity entity = response.getEntity();
-				if (entity != null) {
-					String result = EntityUtils.toString(entity);
-					System.out.println(result);
-					ObjectMapper mapper = new ObjectMapper();
-					albums = mapper.readValue(result, FbAlbums.class);	
-				}
-
-			} finally {
-				response.close();
-			}
-		} catch (ClientProtocolException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			httpClient.close();
-		}
-
-		return albums;
 	}
 }
