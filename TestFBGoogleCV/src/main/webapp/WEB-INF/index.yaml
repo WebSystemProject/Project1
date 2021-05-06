@@ -3,7 +3,7 @@ indexes:
 - kind: User
   ancestor: no
   properties:
-  - name: user_id
+  - name: userID
   - name: fb_post_date
     direction: asc
  

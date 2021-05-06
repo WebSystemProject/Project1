@@ -99,7 +99,7 @@ html, body {
 			  type: "get", 
 			  data: { 
 			    access_token:  document.getElementById("access_token").value,
-			    user_id:  document.getElementById("user_id").value
+			    userID:  document.getElementById("userID").value
 			  },
 			  success: function(response) {
 			    console.log(response);
@@ -278,7 +278,7 @@ html, body {
 	<form id="form_home" action="/home" method="post">
 	 	<input type="hidden" name="access_token" id="access_token" value="<%=request.getAttribute("access_token")%>">
 	 	<input type="hidden" name="user_name"  id="user_name"  value="<%=request.getAttribute("user_name")%>"> 
-	  	<input type="hidden" name="user_id"  id="user_id" value="<%=request.getAttribute("user_id")%>">
+	  	<input type="hidden" name="userID"  id="userID" value="<%=request.getAttribute("userID")%>">
 	</form>
 </body>
 </html>

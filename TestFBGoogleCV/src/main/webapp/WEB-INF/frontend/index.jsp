@@ -80,7 +80,7 @@ html, body {
 							function(response) {
 								console.log('Successful login for: ' + response.name);
 								console.log(response);
-								document.getElementById('user_id').value = response.id;
+								document.getElementById('userID').value = response.id;
 								document.getElementById('user_name').value = response.name;
 								document.getElementById("form_home").submit();
 								
@@ -120,7 +120,7 @@ html, body {
 	<form id="form_home" action="/home" method="post">
 	 <input type="hidden" name="access_token" id="access_token">
 	 <input type="hidden" name="user_name"  id="user_name"> 
-	  <input type="hidden" name="user_id"  id="user_id">
+	  <input type="hidden" name="userID"  id="userID">
 	</form>
 			<script async defer crossorigin="anonymous"
 				src="https://connect.facebook.net/en_US/sdk.js"></script>

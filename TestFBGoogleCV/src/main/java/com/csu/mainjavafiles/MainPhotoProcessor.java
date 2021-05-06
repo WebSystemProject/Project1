@@ -74,22 +74,22 @@ public class MainPhotoProcessor {
 		GoogleAnalytics.publishAnalytics("Login","Login Success");
 		model.addAttribute("access_token", request.getParameter("access_token"));
 		model.addAttribute("user_name", request.getParameter("user_name"));
-		model.addAttribute("user_id", request.getParameter("user_id"));
+		model.addAttribute("userID", request.getParameter("userID"));
 		return "home";
 	}
 
 	@GetMapping(value = "/images")
-	public String getAllImages(Model model, @RequestParam String access_token, String user_id){
+	public String getAllImages(Model model, @RequestParam String access_token, String userID){
 		GoogleAnalytics.publishAnalytics("search","Search images");
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
-		getImagesFromFbAndStoreinDataStore(access_token, datastore, user_id);
-		Response imageDataResponse =  getImagesFromStore(datastore,user_id);
+		getImagesFromFbAndStoreinDataStore(access_token, datastore, userID);
+		Response imageDataResponse =  getImagesFromStore(datastore, userID);
 		model.addAttribute("imageDataResponse", imageDataResponse);
 
 		return "jsonview";
 	}
 	
-	private void getImagesFromFbAndStoreinDataStore(String access_token, DatastoreService datastore, String user_id) {
+	private void getImagesFromFbAndStoreinDataStore(String access_token, DatastoreService datastore, String userID) {
 		try {
 			String baseUrl = "https://graph.facebook.com/v9.0/me/albums";
 			String parameters = "?fields=photos%7Bcreated_time%2Cid%2Cpicture%7D%2Cname&access_token=";
@@ -110,7 +110,7 @@ public class MainPhotoProcessor {
 								if(null == user) {
 									List<EntityAnnotation> imageLabels = getImageLabels(photo.getPicture());
 									if(null != imageLabels) {
-										user = saveToDataStore(imageLabels, photo, datastore, user_id);
+										user = saveToDataStore(imageLabels, photo, datastore, userID);
 									}
 								}
 							});
@@ -129,20 +129,17 @@ public class MainPhotoProcessor {
 	}
 
 	private Entity checkIfPresent(DatastoreService datastore, String fbPhotoId) {
-		Query q =
-				new Query("User")
-				.setFilter(new FilterPredicate("fb_image_id", FilterOperator.EQUAL, fbPhotoId));
+		Query q = new Query("User").setFilter(new FilterPredicate("fb_image_id", FilterOperator.EQUAL, fbPhotoId));
 		PreparedQuery pq = datastore.prepare(q);
 		Entity result = pq.asSingleEntity();
 		return result;
 	}
 
-	private Response getImagesFromStore(DatastoreService datastore,  String user_id ) {
+	private Response getImagesFromStore(DatastoreService datastore,  String userID ) {
 		Query query = new Query("User");
-
 		DateFormat originalFormat = new SimpleDateFormat("MM/dd/yyyy");
 		try {
-			Filter userFilter = new FilterPredicate("user_id", FilterOperator.EQUAL, user_id);
+			Filter userFilter = new FilterPredicate("userID", FilterOperator.EQUAL, userID);
 			query.setFilter(userFilter);
 
 		} catch (Exception e) {
@@ -182,7 +179,7 @@ public class MainPhotoProcessor {
 	}
 
 	//Saving to data store.
-	private Entity saveToDataStore(List<EntityAnnotation> imageLabels, Datum_ photo, DatastoreService datastore, String user_id) {
+	private Entity saveToDataStore(List<EntityAnnotation> imageLabels, Datum_ photo, DatastoreService datastore, String userID) {
 
 		System.out.println("image labels:"+imageLabels);
 		
@@ -199,7 +196,7 @@ public class MainPhotoProcessor {
 				e.printStackTrace();
 			}
 			user.setProperty("fb_post_date", fb_date);
-			user.setProperty("user_id", user_id);
+			user.setProperty("userID", userID);
 			user.setProperty("fb_image_id", photo.getId());
 			user.setProperty("image_url", photo.getPicture());
 			user.setProperty("created_on", new Date());
@@ -216,7 +213,7 @@ public class MainPhotoProcessor {
 	private List<EntityAnnotation> getImageLabels(String imageUrl) {
 		try {
 			
-			byte[]  imgBytes = downloadFile(new URL(imageUrl));  //Download photo from FB
+			byte[]  imgBytes = downloadFile(new URL(imageUrl));
 			
 			ByteString byteString = ByteString.copyFrom(imgBytes);
 			Image image = Image.newBuilder().setContent(byteString).build();
@@ -254,7 +251,7 @@ public class MainPhotoProcessor {
 
 			CloseableHttpResponse response = httpClient.execute(request);
 			try {
-				System.out.println(response.getStatusLine().getStatusCode());   // 200
+				System.out.println(response.getStatusLine().getStatusCode()); 
 				HttpEntity entity = response.getEntity();
 				if (entity != null) {
 					String result = EntityUtils.toString(entity);
