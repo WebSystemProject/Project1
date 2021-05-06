@@ -62,7 +62,6 @@ import com.google.protobuf.ByteString;
 @RequestMapping("/")
 public class MainPhotoProcessor {
 
-
 	@GetMapping("/")
 	public String index(Model model) {
 		GoogleAnalytics.publishAnalytics("Login","Login");
@@ -81,34 +80,21 @@ public class MainPhotoProcessor {
 
 	@GetMapping(value = "/images")
 	public String getAllImages(Model model, @RequestParam String access_token, String user_id){
-
 		GoogleAnalytics.publishAnalytics("search","Search images");
-		
-		//Get Images from FB, run vision and store in data store.
 		DatastoreService datastore = DatastoreServiceFactory.getDatastoreService();
 		getImagesFromFbAndStoreinDataStore(access_token, datastore, user_id);
-
-
-		//Get data for a given date from data store and send response.
-		//ImageDataResponse imageDataResponse =  getImagesFromStore(datastore,fromDate, toDate, user_id);
 		Response imageDataResponse =  getImagesFromStore(datastore,user_id);
 		model.addAttribute("imageDataResponse", imageDataResponse);
 
 		return "jsonview";
 	}
-//UserPhotosResponse
-//UserPhotosResponse
-	//ImageDataResponse
 	
 	private void getImagesFromFbAndStoreinDataStore(String access_token, DatastoreService datastore, String user_id) {
 		try {
-			int limit = 5; //TODO increase the limit 
 			String baseUrl = "https://graph.facebook.com/v9.0/me/albums";
 			String parameters = "?fields=photos%7Bcreated_time%2Cid%2Cpicture%7D%2Cname&access_token=";
 
 			String url = baseUrl + parameters + access_token;
-
-			// This is to work with FB paging
 			int count = 0;
 			while(StringUtils.isNotBlank(url) && count <= 5) {
 				
@@ -120,21 +106,13 @@ public class MainPhotoProcessor {
 						if(null !=  album.getPhotos() && null != album.getPhotos().getData() && !album.getPhotos().getData().isEmpty()) {
 							album.getPhotos().getData().forEach( photo -> {
 
-								//TODO Check if the image is already present in the data store and process google vision if not present.
-								
-								System.out.println(photo.getPicture());
-
 								Entity user = checkIfPresent(datastore, photo.getId());
 								if(null == user) {
-									//Process and fetch image lables using google vision analytics.
 									List<EntityAnnotation> imageLabels = getImageLabels(photo.getPicture());
-									System.out.println(null != imageLabels);
-									//Save the imageId, image URL and lables to data store
 									if(null != imageLabels) {
 										user = saveToDataStore(imageLabels, photo, datastore, user_id);
 									}
 								}
-
 							});
 						}
 					});
@@ -150,8 +128,6 @@ public class MainPhotoProcessor {
 		}
 	}
 
-
-	//Query data store to check if the image is already present.
 	private Entity checkIfPresent(DatastoreService datastore, String fbPhotoId) {
 		Query q =
 				new Query("User")
@@ -161,8 +137,6 @@ public class MainPhotoProcessor {
 		return result;
 	}
 
-
-	//Query data store to check if the image is already present.
 	private Response getImagesFromStore(DatastoreService datastore,  String user_id ) {
 		Query query = new Query("User");
 
@@ -215,13 +189,8 @@ public class MainPhotoProcessor {
 		List<String> lables = imageLabels.stream().filter(label -> label.getScore()  >= 0.96)
 				.map(EntityAnnotation::getDescription).collect(Collectors.toList());
 
-		
-		
 		if(null != lables && !lables.isEmpty()) {
-
 			Entity user = new Entity("User");
-
-
 			DateFormat originalFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.ENGLISH);
 			Date fb_date = null;
 			try {
@@ -229,7 +198,6 @@ public class MainPhotoProcessor {
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}
-
 			user.setProperty("fb_post_date", fb_date);
 			user.setProperty("user_id", user_id);
 			user.setProperty("fb_image_id", photo.getId());
