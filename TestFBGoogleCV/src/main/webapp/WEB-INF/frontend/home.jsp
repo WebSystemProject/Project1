@@ -32,7 +32,7 @@ html, body {
 	margin: 0;
 }
 
-.full-height {
+.total {
 	height: 100%;
 	width: 100%;
 	border-collapse: collapse;
@@ -45,7 +45,7 @@ html, body {
   padding: 0px;
 }
 
-.sidebar {
+.column {
   background-color: #f1f1f1;
   height: 100%;
   overflow: auto;
@@ -57,29 +57,26 @@ html, body {
   overflow: auto;
 }
 
-.sidebar a {
+.column a {
   display: block;
   color: black;
   padding: 16px;
   text-decoration: none;
 }
  
-.sidebar a.active {
+.column a.active {
   background-color: #ff6699;
   color: white;
 }
 
-.sidebar a:hover:not(.active) {
-  background-color: #0066ff;
-  color: white;
-}
+
 
 .loader {
-  border: 16px solid #f3f3f3;
-  border-radius: 50%;
-  border-top: 16px solid #3498db;
-  width: 30px;
-  height: 30px;
+  border: 10px solid #3498db;
+  border-radius: 20%;
+  border-top: 10px solid #3498db;
+  width: 20px;
+  height: 20px;
   -webkit-animation: spin 2s linear infinite; /* Safari */
   animation: spin 2s linear infinite;
 }
@@ -111,14 +108,15 @@ html, body {
 			  url: "/images",
 			  type: "get", 
 			  data: { 
+			   // fromDate: '01/01/2001',
+			    //toDate: new Date().toLocaleString().split(',')[0],
 			    
 			    access_token:  document.getElementById("access_token").value,
 			    user_id:  document.getElementById("user_id").value
 			  },
 			  success: function(response) {
 			    console.log(response);
-			    
-			     createPhotoForApp(response);
+			    createImages(response);
 			  },
 			  error: function(xhr) {
 				  document.getElementById("loader").style.display="none";
@@ -132,19 +130,18 @@ html, body {
 		while (content_div.firstChild) {
 			content_div.removeChild(content_div.lastChild);
 		  }
-		var sidebar_div = document.getElementById("div_sidebar");
-		while (sidebar_div.firstChild) {
-			sidebar_div.removeChild(sidebar_div.lastChild);
+		var column_div = document.getElementById("div_column");
+		while (column_div.firstChild) {
+			column_div.removeChild(column_div.lastChild);
 		  }
 	}
 	
 	
 	var currentLabelDisplay;
 	var currentLabelA;
-	
-		function createPhotoForApp(response){
+	function createImages(response){
 		var content_div = document.getElementById("div_content");
-		var sidebar_div = document.getElementById("div_sidebar");
+		var column_div = document.getElementById("div_column");
 		
 		content_div.appendChild(document.createElement("br"));
 		content_div.appendChild(document.createElement("br"));
@@ -188,7 +185,7 @@ html, body {
 		 content_div.appendChild(label_div);
 		 
 		 
-		 sidebar_div.appendChild(label_a);
+		 column_div.appendChild(label_a);
 		 isFirst=false;
 		 
 		});
@@ -223,19 +220,20 @@ html, body {
 	function createImageElement(image_url){
 		var img = document.createElement("img");
 		img.setAttribute("src", image_url);
-		img.style.height="275px";
-		img.style.width="300px";
+		img.style.height="200px";
+		img.style.width="200px";
 		return img;
 	}
 	
 	function twiteer(image_url){
 		var url = "https://twitter.com/intent/tweet?text=" + encodeURIComponent(image_url);
-		var twitter = document.createElement('a');
-		twitter.setAttribute('href', url);
-		twitter.setAttribute('class', 'twitter-share-button');
-		twitter.setAttribute("data-lang","en");
-		twitter.innerHTML = "Tweet";
-		return twitter;
+		var tweet_a = document.createElement("a");
+		tweet_a.setAttribute("href",url);
+		tweet_a.setAttribute("class","twitter-share-button");
+		tweet_a.setAttribute("data-lang","en");
+		tweet_a.setAttribute("data-show-count","false");	
+		tweet_a.text="Tweet";
+		return tweet_a;
 	}
 	
 	
@@ -287,7 +285,7 @@ html, body {
 
 </head>
 <body onload="javascript:fetchUserImage()">
-	<table class="full-height" >
+	<table class="total" >
 
 		<tr style="height: 10%">
 		
@@ -314,7 +312,7 @@ html, body {
 		</tr>
 		<tr style="height: 85%">
 			<td width="15%">
-				<div class="sidebar" id="div_sidebar">
+				<div class="column" id="div_column">
 
 				</div>
 			</td>
@@ -324,7 +322,6 @@ html, body {
 				</div>
 			</td>
 		</tr>
-		
 		
 	</table>
 

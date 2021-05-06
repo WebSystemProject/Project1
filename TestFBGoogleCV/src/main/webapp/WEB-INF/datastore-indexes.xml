@@ -1,0 +1,9 @@
+<datastore-indexes autoGenerate="true">
+
+    <!-- Used 1 time in query history -->
+    <datastore-index kind="User" ancestor="false" source="auto">
+        <property name="user_id" direction="asc"/>
+        <property name="fb_post_date" direction="asc"/>
+    </datastore-index>
+
+</datastore-indexes>
